@@ -6,12 +6,13 @@ import {
   DollarSign,
   TrendingUp,
   Mail,
+  Check,
   ChevronRight,
   CircleDot,
   Plus,
   Sparkles,
 } from "lucide-react";
-import type { DashboardData } from "@/db/repo";
+import { togglePaidInstallment, type DashboardData } from "@/db/repo";
 import {
   formatBRL,
   formatBRLCompact,
@@ -265,6 +266,13 @@ export function DashboardView({
                     >
                       <Mail size={15} />
                     </a>
+                    <button
+                      onClick={() => togglePaidInstallment(i.id, true)}
+                      className="btn btn-soft !h-8 !w-8 !p-0 shrink-0"
+                      title="Marcar parcela como paga"
+                    >
+                      <Check size={15} />
+                    </button>
                   </div>
                 );
               })}

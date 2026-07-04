@@ -1,5 +1,5 @@
 // Dados de exemplo — permite explorar o app com uma carteira realista.
-import { addMonthsISO, addYearsISO, parseISO, todayISO } from "@/lib/format";
+import { addMonthsISO, parseISO, todayISO } from "@/lib/format";
 import { run } from "./database";
 import * as repo from "./repo";
 
@@ -9,49 +9,117 @@ function addDaysISO(iso: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+function markOverdueInstallments(policyId: string) {
+  run(
+    `UPDATE installments SET status = 'atrasada'
+      WHERE policy_id = ? AND status = 'pendente' AND due_date < ?`,
+    [policyId, todayISO()],
+  );
+}
+
 export function seedSampleData() {
   const today = todayISO();
 
   const clients = [
     {
-      name: "Marina Duarte",
-      email: "marina.duarte@example.com",
-      phone: "(11) 98811-2233",
-      cpf: "312.456.789-01",
+      name: "Juliana Ferreira Costa",
+      email: "juliana.costa@example.com",
+      phone: "(11) 98765-4321",
+      cpf: "123.456.789-00",
       city: "São Paulo",
       state: "SP",
-      tags: ["VIP", "Auto"],
-      notes: "Indicada pelo Ricardo. Prefere contato por WhatsApp.",
+      tags: ["Auto", "Novo"],
+      notes: "Comparando cotações de seguro auto para o Onix 2022.",
     },
     {
-      name: "Ricardo Alves",
-      email: "ricardo.alves@example.com",
-      phone: "(11) 97722-3344",
-      cpf: "221.334.556-77",
-      city: "Campinas",
-      state: "SP",
-      tags: ["Auto"],
-      notes: null,
-    },
-    {
-      name: "Fernanda Lima",
-      email: "fernanda.lima@example.com",
-      phone: "(21) 96633-4455",
-      cpf: "445.667.889-00",
+      name: "Eduardo Nascimento Silva",
+      email: "eduardo.nascimento@example.com",
+      phone: "(21) 99887-6655",
+      cpf: "234.567.890-11",
       city: "Rio de Janeiro",
       state: "RJ",
-      tags: ["Novo", "Vida"],
-      notes: "Quer cotação de seguro viagem em dezembro.",
+      tags: ["Residencial"],
+      notes: "Apartamento novo, quer cobertura contra roubo e incêndio.",
     },
     {
-      name: "Grupo Vetor Ltda",
-      email: "contato@grupovetor.example.com",
-      phone: "(31) 3222-1100",
-      cpf: null,
+      name: "Camila Rodrigues Barbosa",
+      email: "camila.barbosa@example.com",
+      phone: "(31) 98123-4567",
+      cpf: "345.678.901-22",
+      city: "Belo Horizonte",
+      state: "MG",
+      tags: ["Saúde"],
+      notes: "Busca plano de saúde individual, já é cliente de auto em outra corretora.",
+    },
+    {
+      name: "Rafael Augusto Pereira",
+      email: "rafael.pereira@example.com",
+      phone: "(11) 97654-3210",
+      cpf: "456.789.012-33",
+      city: "São Paulo",
+      state: "SP",
+      tags: ["Auto", "VIP"],
+      notes: "Cliente antigo, sempre renova em dia.",
+    },
+    {
+      name: "Beatriz Almeida Souza",
+      email: "beatriz.almeida@example.com",
+      phone: "(21) 96543-2109",
+      cpf: "567.890.123-44",
+      city: "Niterói",
+      state: "RJ",
+      tags: ["Vida"],
+      notes: "Segurada de vida, renovação urgente.",
+    },
+    {
+      name: "Thiago Henrique Martins",
+      email: "thiago.martins@example.com",
+      phone: "(31) 3344-5566",
+      cpf: "678.901.234-55",
       city: "Belo Horizonte",
       state: "MG",
       tags: ["Empresarial"],
-      notes: "Frota de 12 veículos + seguro empresarial do galpão.",
+      notes: "Dono de loja, apólice empresarial vencida — contatar com urgência.",
+    },
+    {
+      name: "Larissa Gonçalves Ribeiro",
+      email: "larissa.ribeiro@example.com",
+      phone: "(19) 95432-1098",
+      cpf: "789.012.345-66",
+      city: "Campinas",
+      state: "SP",
+      tags: ["Residencial"],
+      notes: null,
+    },
+    {
+      name: "Bruno Cardoso Teixeira",
+      email: "bruno.teixeira@example.com",
+      phone: "(41) 94321-0987",
+      cpf: "890.123.456-77",
+      city: "Curitiba",
+      state: "PR",
+      tags: ["Auto"],
+      notes: "Cancelou a apólice após vender o carro.",
+    },
+    {
+      name: "Patrícia Mendes Carvalho",
+      email: "patricia.carvalho@example.com",
+      phone: "(11) 93210-9876",
+      cpf: "901.234.567-88",
+      city: "São Paulo",
+      state: "SP",
+      tags: ["Viagem", "Novo"],
+      notes: "Viagem para a Europa em outubro, precisa de seguro viagem.",
+    },
+    {
+      name: "Gustavo Lima Andrade",
+      email: "gustavo.andrade@example.com",
+      phone: "(48) 92109-8765",
+      cpf: "012.345.678-99",
+      city: "Florianópolis",
+      state: "SC",
+      tags: ["Empresarial", "VIP"],
+      notes: "Rede de 3 lojas, apólice empresarial renovando em breve.",
     },
   ].map((c) => {
     const r = repo.createClient(c);
@@ -59,111 +127,345 @@ export function seedSampleData() {
     return r.id;
   });
 
-  const [marina, ricardo, fernanda, vetor] = clients;
+  const [
+    juliana,
+    eduardo,
+    camila,
+    rafael,
+    beatriz,
+    thiago,
+    larissa,
+    bruno,
+    patricia,
+    gustavo,
+  ] = clients;
 
-  // Apólices (datas relativas a hoje para popular dashboard/agenda)
-  repo.createPolicy({
-    clientId: marina,
-    type: "auto",
-    insurer: "Porto Seguro",
-    policyNumber: "AP-2025-0341",
-    premium: 4890,
-    commissionRate: 15,
-    paymentMethod: "cartao",
-    installmentsCount: 12,
-    startDate: addMonthsISO(today, -11),
-    endDate: addDaysISO(today, 18), // renovação chegando — aparece no dashboard
-  });
-  repo.createPolicy({
-    clientId: marina,
-    type: "residencial",
-    insurer: "Allianz",
-    policyNumber: "RE-2025-1102",
-    premium: 1250,
-    commissionRate: 12,
-    paymentMethod: "boleto",
-    installmentsCount: 4,
-    startDate: addMonthsISO(today, -2),
-    endDate: addMonthsISO(today, 10),
-  });
-  repo.createPolicy({
-    clientId: ricardo,
-    type: "auto",
-    insurer: "Azul Seguros",
-    policyNumber: "AU-2024-8876",
-    premium: 3480,
-    commissionRate: 10,
-    paymentMethod: "boleto",
-    installmentsCount: 10,
-    startDate: addMonthsISO(today, -9),
-    endDate: addMonthsISO(today, 3),
-  });
-  repo.createPolicy({
-    clientId: fernanda,
-    type: "vida",
-    insurer: "SulAmérica",
-    policyNumber: "VI-2025-3320",
-    premium: 2160,
-    commissionRate: 18,
-    paymentMethod: "debito",
-    installmentsCount: 12,
-    startDate: today,
-    endDate: addYearsISO(today, 1),
-  });
-  repo.createPolicy({
-    clientId: vetor,
-    type: "empresarial",
-    insurer: "Tokio Marine",
-    policyNumber: "EM-2025-0077",
-    premium: 18400,
-    commissionRate: 8,
-    paymentMethod: "boleto",
-    installmentsCount: 12,
-    startDate: addMonthsISO(today, -1),
-    endDate: addMonthsISO(today, 11),
-  });
+  // ---------------------------------------------------------------------
+  // Apenas cotações/propostas em aberto (sem apólice ainda)
+  // ---------------------------------------------------------------------
 
-  // Cotação em aberto para a Fernanda (seguro viagem)
-  const q = repo.createQuote({ clientId: fernanda, type: "viagem" });
-  if (q.ok) {
-    void repo.addQuoteOption(q.id, {
+  const qJuliana = repo.createQuote({ clientId: juliana, type: "auto" });
+  if (qJuliana.ok) {
+    void repo.addQuoteOption(qJuliana.id, {
       insurer: "Porto Seguro",
-      premium: 480,
-      coverage: "Europa 15 dias, bagagem + despesas médicas EUR 60k",
-      installmentsCount: 3,
+      premium: 3200,
+      coverage: "Compreensiva, terceiros até R$ 50 mil",
+      installmentsCount: 12,
       paymentMethod: "cartao",
     });
-    void repo.addQuoteOption(q.id, {
-      insurer: "Zurich",
-      premium: 415,
-      coverage: "Europa 15 dias, despesas médicas EUR 40k",
-      installmentsCount: 2,
+    void repo
+      .addQuoteOption(qJuliana.id, {
+        insurer: "Azul Seguros",
+        premium: 2950,
+        coverage: "Compreensiva, terceiros até R$ 40 mil",
+        installmentsCount: 10,
+        paymentMethod: "boleto",
+      })
+      .then((r) => {
+        if (r.ok) repo.markBestOption(qJuliana.id, r.option.id);
+      });
+    void repo.addQuoteOption(qJuliana.id, {
+      insurer: "HDI Seguros",
+      premium: 3100,
+      coverage: "Compreensiva, carro reserva 15 dias",
+      installmentsCount: 12,
       paymentMethod: "cartao",
     });
   }
 
-  // Sinistro em análise
-  repo.addClaim({
-    clientId: ricardo,
-    date: addMonthsISO(today, -1),
-    description: "Colisão traseira no estacionamento — orçamento da funilaria anexado.",
-    amount: 5200,
-    status: "em_analise",
-  });
+  const qEduardo = repo.createQuote({ clientId: eduardo, type: "residencial" });
+  if (qEduardo.ok) {
+    void repo.addQuoteOption(qEduardo.id, {
+      insurer: "Allianz",
+      premium: 980,
+      coverage: "Incêndio, roubo e danos elétricos",
+      installmentsCount: 4,
+      paymentMethod: "boleto",
+    });
+    void repo.addQuoteOption(qEduardo.id, {
+      insurer: "Tokio Marine",
+      premium: 1050,
+      coverage: "Incêndio, roubo e responsabilidade civil",
+      installmentsCount: 6,
+      paymentMethod: "cartao",
+    });
+  }
 
-  // Relacionamento
-  repo.addComment(marina, "whatsapp", "Confirmou renovação do auto. Enviar cotação atualizada até sexta.");
-  repo.addComment(fernanda, "ligacao", "Primeira reunião — perfil conservador, quer ampliar cobertura de vida.");
+  const qCamila = repo.createQuote({ clientId: camila, type: "saude" });
+  if (qCamila.ok) {
+    void repo
+      .addQuoteOption(qCamila.id, {
+        insurer: "SulAmérica Saúde",
+        premium: 650,
+        coverage: "Plano individual, coparticipação parcial",
+        installmentsCount: 1,
+        paymentMethod: "debito",
+      })
+      .then((r) => {
+        if (r.ok) repo.markBestOption(qCamila.id, r.option.id);
+      });
+    void repo.addQuoteOption(qCamila.id, {
+      insurer: "Bradesco Saúde",
+      premium: 720,
+      coverage: "Plano individual, sem coparticipação",
+      installmentsCount: 1,
+      paymentMethod: "debito",
+    });
+  }
 
-  // Parcelas já vencidas ficam pagas — sobram só as 2 últimas em aberto,
-  // simulando uma carteira em dia com cobranças recentes.
-  run(
-    `UPDATE installments SET status = 'paga', paid_at = due_date
-      WHERE due_date < ? AND id NOT IN (
-        SELECT id FROM installments WHERE due_date < ? ORDER BY due_date DESC LIMIT 2
-      )`,
-    [today, today],
-  );
+  const qPatricia = repo.createQuote({ clientId: patricia, type: "viagem" });
+  if (qPatricia.ok) {
+    void repo.addQuoteOption(qPatricia.id, {
+      insurer: "Porto Seguro Viagem",
+      premium: 390,
+      coverage: "Europa 10 dias, bagagem + despesas médicas EUR 30k",
+      installmentsCount: 2,
+      paymentMethod: "cartao",
+    });
+    void repo
+      .addQuoteOption(qPatricia.id, {
+        insurer: "Assist Card",
+        premium: 350,
+        coverage: "Europa 10 dias, despesas médicas EUR 60k",
+        installmentsCount: 1,
+        paymentMethod: "avista",
+      })
+      .then((r) => {
+        if (r.ok) repo.markBestOption(qPatricia.id, r.option.id);
+      });
+  }
+
+  // ---------------------------------------------------------------------
+  // Cotações com proposta escolhida → oficializadas em apólice,
+  // com vencimentos variados (bem próximo, distante, vencida, cancelada)
+  // ---------------------------------------------------------------------
+
+  // Rafael — auto vencendo em 12 dias (renovação urgente)
+  const qRafael = repo.createQuote({ clientId: rafael, type: "auto" });
+  if (qRafael.ok) {
+    void repo.addQuoteOption(qRafael.id, {
+      insurer: "Porto Seguro",
+      premium: 4200,
+      coverage: "Compreensiva top, carro reserva 30 dias",
+      installmentsCount: 12,
+      paymentMethod: "cartao",
+    });
+    void repo
+      .addQuoteOption(qRafael.id, {
+        insurer: "Azul Seguros",
+        premium: 3900,
+        coverage: "Compreensiva, terceiros até R$ 60 mil",
+        installmentsCount: 12,
+        paymentMethod: "boleto",
+      })
+      .then((r) => {
+        if (!r.ok) return;
+        repo.officializeQuote({
+          quoteId: qRafael.id,
+          optionId: r.option.id,
+          policyNumber: "AU-2025-4471",
+          paymentMethod: "boleto",
+          installmentsCount: 12,
+          startDate: addMonthsISO(today, -11),
+          endDate: addDaysISO(today, 12),
+          commissionRate: 12,
+        });
+      });
+  }
+
+  // Beatriz — vida vencendo em 5 dias (muito urgente)
+  const qBeatriz = repo.createQuote({ clientId: beatriz, type: "vida" });
+  if (qBeatriz.ok) {
+    void repo.addQuoteOption(qBeatriz.id, {
+      insurer: "SulAmérica Vida",
+      premium: 180,
+      coverage: "Morte natural e acidental, capital R$ 100 mil",
+      installmentsCount: 12,
+      paymentMethod: "debito",
+    });
+    void repo
+      .addQuoteOption(qBeatriz.id, {
+        insurer: "Prudential",
+        premium: 210,
+        coverage: "Morte e invalidez, capital R$ 150 mil",
+        installmentsCount: 12,
+        paymentMethod: "cartao",
+      })
+      .then((r) => {
+        if (!r.ok) return;
+        repo.officializeQuote({
+          quoteId: qBeatriz.id,
+          optionId: r.option.id,
+          policyNumber: "VI-2025-2210",
+          paymentMethod: "cartao",
+          installmentsCount: 12,
+          startDate: addMonthsISO(today, -11),
+          endDate: addDaysISO(today, 5),
+          commissionRate: 18,
+        });
+      });
+  }
+
+  // Thiago — empresarial já vencida há 20 dias
+  const qThiago = repo.createQuote({ clientId: thiago, type: "empresarial" });
+  if (qThiago.ok) {
+    void repo.addQuoteOption(qThiago.id, {
+      insurer: "Tokio Marine",
+      premium: 15800,
+      coverage: "Loja completa, incêndio e roubo",
+      installmentsCount: 12,
+      paymentMethod: "boleto",
+    });
+    void repo
+      .addQuoteOption(qThiago.id, {
+        insurer: "Zurich",
+        premium: 14900,
+        coverage: "Loja completa, danos elétricos inclusos",
+        installmentsCount: 12,
+        paymentMethod: "boleto",
+      })
+      .then((r) => {
+        if (!r.ok) return;
+        const result = repo.officializeQuote({
+          quoteId: qThiago.id,
+          optionId: r.option.id,
+          policyNumber: "EM-2024-0099",
+          paymentMethod: "boleto",
+          installmentsCount: 12,
+          startDate: addMonthsISO(today, -13),
+          endDate: addDaysISO(today, -20),
+          commissionRate: 8,
+        });
+        if (result.ok) {
+          repo.updatePolicy(result.policyId, {
+            type: "empresarial",
+            insurer: "Zurich",
+            policyNumber: "EM-2024-0099",
+            premium: 14900,
+            commissionRate: 8,
+            paymentMethod: "boleto",
+            installmentsCount: 12,
+            startDate: addMonthsISO(today, -13),
+            endDate: addDaysISO(today, -20),
+            status: "vencida",
+          });
+          markOverdueInstallments(result.policyId);
+        }
+      });
+  }
+
+  // Larissa — residencial com vencimento distante (8 meses)
+  const qLarissa = repo.createQuote({ clientId: larissa, type: "residencial" });
+  if (qLarissa.ok) {
+    void repo
+      .addQuoteOption(qLarissa.id, {
+        insurer: "Porto Seguro",
+        premium: 1400,
+        coverage: "Incêndio, roubo e vendaval",
+        installmentsCount: 4,
+        paymentMethod: "boleto",
+      })
+      .then((r) => {
+        if (!r.ok) return;
+        repo.officializeQuote({
+          quoteId: qLarissa.id,
+          optionId: r.option.id,
+          policyNumber: "RE-2025-3345",
+          paymentMethod: "boleto",
+          installmentsCount: 4,
+          startDate: addMonthsISO(today, -4),
+          endDate: addMonthsISO(today, 8),
+          commissionRate: 12,
+        });
+      });
+    void repo.addQuoteOption(qLarissa.id, {
+      insurer: "Allianz",
+      premium: 1550,
+      coverage: "Incêndio, roubo e responsabilidade civil",
+      installmentsCount: 6,
+      paymentMethod: "cartao",
+    });
+  }
+
+  // Bruno — auto cancelada após a venda do carro
+  const qBruno = repo.createQuote({ clientId: bruno, type: "auto" });
+  if (qBruno.ok) {
+    void repo
+      .addQuoteOption(qBruno.id, {
+        insurer: "Azul Seguros",
+        premium: 2800,
+        coverage: "Compreensiva, terceiros até R$ 40 mil",
+        installmentsCount: 10,
+        paymentMethod: "boleto",
+      })
+      .then((r) => {
+        if (!r.ok) return;
+        const result = repo.officializeQuote({
+          quoteId: qBruno.id,
+          optionId: r.option.id,
+          policyNumber: "AU-2024-7789",
+          paymentMethod: "boleto",
+          installmentsCount: 10,
+          startDate: addMonthsISO(today, -14),
+          endDate: addMonthsISO(today, -2),
+          commissionRate: 10,
+        });
+        if (result.ok) {
+          repo.updatePolicy(result.policyId, {
+            type: "auto",
+            insurer: "Azul Seguros",
+            policyNumber: "AU-2024-7789",
+            premium: 2800,
+            commissionRate: 10,
+            paymentMethod: "boleto",
+            installmentsCount: 10,
+            startDate: addMonthsISO(today, -14),
+            endDate: addMonthsISO(today, -2),
+            status: "cancelada",
+          });
+        }
+      });
+    void repo.addQuoteOption(qBruno.id, {
+      insurer: "HDI Seguros",
+      premium: 3050,
+      coverage: "Compreensiva, carro reserva 15 dias",
+      installmentsCount: 12,
+      paymentMethod: "cartao",
+    });
+  }
+
+  // Gustavo — empresarial vencendo em 25 dias (dentro da janela de renovação)
+  const qGustavo = repo.createQuote({ clientId: gustavo, type: "empresarial" });
+  if (qGustavo.ok) {
+    void repo
+      .addQuoteOption(qGustavo.id, {
+        insurer: "Tokio Marine",
+        premium: 22000,
+        coverage: "3 lojas, incêndio, roubo e responsabilidade civil",
+        installmentsCount: 12,
+        paymentMethod: "boleto",
+      })
+      .then((r) => {
+        if (!r.ok) return;
+        repo.officializeQuote({
+          quoteId: qGustavo.id,
+          optionId: r.option.id,
+          policyNumber: "EM-2025-1180",
+          paymentMethod: "boleto",
+          installmentsCount: 12,
+          startDate: addMonthsISO(today, -11),
+          endDate: addDaysISO(today, 25),
+          commissionRate: 8,
+        });
+      });
+    void repo.addQuoteOption(qGustavo.id, {
+      insurer: "Liberty Seguros",
+      premium: 23500,
+      coverage: "3 lojas, incêndio, roubo e quebra de vidros",
+      installmentsCount: 12,
+      paymentMethod: "boleto",
+    });
+  }
 
   // Meta do mês
   repo.setGoal(today.slice(0, 7), 15000);
