@@ -80,6 +80,10 @@ export function getClientPolicies(clientId: string): Policy[] {
   );
 }
 
+export function getPolicy(id: string): Policy | null {
+  return get<Policy>("SELECT * FROM policies WHERE id = ?", [id]);
+}
+
 export function getClientQuotes(clientId: string): (Quote & { options: QuoteOption[] })[] {
   const quotes = all<Quote>(
     "SELECT * FROM quotes WHERE client_id = ? ORDER BY created_at DESC",
@@ -635,12 +639,13 @@ export function createQuote(input: {
   clientId: string;
   type: PolicyType;
   notes?: string | null;
+  renewsPolicyId?: string | null;
 }): { ok: true; id: string } | { ok: false; error: string } {
   const id = uuid();
   run(
-    `INSERT INTO quotes (id, client_id, type, status, policy_id, notes, created_at)
-     VALUES (?, ?, ?, 'aberta', NULL, ?, ?)`,
-    [id, input.clientId, input.type, input.notes ?? null, nowISO()],
+    `INSERT INTO quotes (id, client_id, type, status, policy_id, renews_policy_id, notes, created_at)
+     VALUES (?, ?, ?, 'aberta', NULL, ?, ?, ?)`,
+    [id, input.clientId, input.type, input.renewsPolicyId ?? null, input.notes ?? null, nowISO()],
   );
   touch();
   return { ok: true, id };
@@ -830,6 +835,11 @@ export function officializeQuote(input: {
     policyId,
     input.quoteId,
   ]);
+
+  // 4) se esta cotação renovava uma apólice antiga, fecha o ciclo dela
+  if (quote.renews_policy_id) {
+    run("UPDATE policies SET status = 'renovada' WHERE id = ?", [quote.renews_policy_id]);
+  }
 
   touch();
   return { ok: true, clientId: quote.client_id, policyId };

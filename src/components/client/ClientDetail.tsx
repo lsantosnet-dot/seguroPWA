@@ -132,10 +132,12 @@ export function ClientDetail({
             client={client}
             policies={policies}
             installmentsByPolicy={installmentsByPolicy}
+            quotes={quotes}
+            onViewQuotes={() => setTab("cotacoes")}
           />
         )}
         {tab === "cotacoes" && (
-          <QuotesTab clientId={client.id} quotes={quotes} />
+          <QuotesTab clientId={client.id} quotes={quotes} policies={policies} />
         )}
         {tab === "relacionamento" && (
           <RelationshipTab clientId={client.id} comments={comments} />

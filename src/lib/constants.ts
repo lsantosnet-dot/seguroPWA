@@ -31,6 +31,7 @@ export const POLICY_STATUS_LABEL: Record<PolicyStatus, string> = {
   em_cotacao: "Em cotação",
   vencida: "Vencida",
   cancelada: "Cancelada",
+  renovada: "Renovada",
 };
 
 export const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [

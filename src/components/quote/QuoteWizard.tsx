@@ -30,20 +30,25 @@ import { addYearsISO, formatBRL, todayISO } from "@/lib/format";
 import type {
   Client,
   PaymentMethod,
+  Policy,
   PolicyType,
   Quote,
   QuoteOption,
 } from "@/lib/types";
+import { POLICY_TYPE_LABEL } from "@/lib/constants";
+import { formatDate } from "@/lib/format";
 
 type Step = 1 | 2 | 3;
 
 export function QuoteWizard({
   clients,
   preselectedClientId,
+  renewsPolicy,
   resume,
 }: {
   clients: Pick<Client, "id" | "name">[];
   preselectedClientId?: string;
+  renewsPolicy?: Pick<Policy, "id" | "type" | "insurer" | "end_date">;
   resume?: Quote & { options: QuoteOption[]; client: Client };
 }) {
   const navigate = useNavigate();
@@ -58,7 +63,7 @@ export function QuoteWizard({
     preselectedClientId || clients.length ? "existing" : "new",
   );
   const [clientId, setClientId] = useState(preselectedClientId ?? "");
-  const [type, setType] = useState<PolicyType>(resume?.type ?? "auto");
+  const [type, setType] = useState<PolicyType>(resume?.type ?? renewsPolicy?.type ?? "auto");
   const [newClient, setNewClient] = useState({
     name: "",
     email: "",
@@ -89,7 +94,7 @@ export function QuoteWizard({
     } else if (!cid) {
       return setError("Selecione um cliente");
     }
-    const q = createQuote({ clientId: cid, type });
+    const q = createQuote({ clientId: cid, type, renewsPolicyId: renewsPolicy?.id ?? null });
     if (!q.ok) return setError(q.error);
     setQuoteId(q.id);
     setClientName(cname);
@@ -104,6 +109,13 @@ export function QuoteWizard({
   return (
     <div className="mx-auto max-w-3xl">
       <Stepper step={step} />
+
+      {renewsPolicy && (
+        <p className="mb-4 rounded-lg bg-accent-soft px-4 py-2 text-sm text-accent">
+          Renovação da apólice {POLICY_TYPE_LABEL[renewsPolicy.type]} · {renewsPolicy.insurer}
+          {renewsPolicy.end_date ? ` · vence em ${formatDate(renewsPolicy.end_date)}` : ""}
+        </p>
+      )}
 
       {error && (
         <p className="mb-4 rounded-lg bg-danger/10 px-4 py-2 text-sm text-danger">

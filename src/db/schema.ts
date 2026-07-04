@@ -37,13 +37,14 @@ CREATE INDEX IF NOT EXISTS policies_client_idx ON policies (client_id);
 CREATE INDEX IF NOT EXISTS policies_end_idx    ON policies (end_date);
 
 CREATE TABLE IF NOT EXISTS quotes (
-  id          TEXT PRIMARY KEY,
-  client_id   TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
-  type        TEXT NOT NULL,
-  status      TEXT NOT NULL DEFAULT 'aberta',
-  policy_id   TEXT REFERENCES policies(id) ON DELETE SET NULL,
-  notes       TEXT,
-  created_at  TEXT NOT NULL
+  id                TEXT PRIMARY KEY,
+  client_id         TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  type              TEXT NOT NULL,
+  status            TEXT NOT NULL DEFAULT 'aberta',
+  policy_id         TEXT REFERENCES policies(id) ON DELETE SET NULL,
+  renews_policy_id  TEXT REFERENCES policies(id) ON DELETE SET NULL,
+  notes             TEXT,
+  created_at        TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS quotes_client_idx ON quotes (client_id);
 

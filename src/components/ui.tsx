@@ -46,7 +46,7 @@ export function PolicyStatusBadge({ status }: { status: PolicyStatus }) {
         ? "badge-blue"
         : status === "vencida"
           ? "badge-red"
-          : "badge-gray";
+          : "badge-gray"; // cancelada / renovada
   return <span className={`badge ${cls}`}>{POLICY_STATUS_LABEL[status]}</span>;
 }
 

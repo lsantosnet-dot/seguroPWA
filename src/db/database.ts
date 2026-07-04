@@ -17,7 +17,19 @@ export async function openDatabase(): Promise<Database> {
   const saved = await idbGet<Uint8Array>(DB_KEY);
   db = saved ? new SQL.Database(saved) : new SQL.Database();
   db.exec(SCHEMA);
+  migrate(db);
   return db;
+}
+
+/** Migrações incrementais para bancos já persistidos (CREATE TABLE IF NOT EXISTS não adiciona colunas novas). */
+function migrate(d: Database) {
+  try {
+    d.exec(
+      "ALTER TABLE quotes ADD COLUMN renews_policy_id TEXT REFERENCES policies(id) ON DELETE SET NULL",
+    );
+  } catch {
+    // coluna já existe
+  }
 }
 
 function requireDb(): Database {

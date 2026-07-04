@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Plus, Mail, ChevronDown, ShieldCheck, Pencil, Trash2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Plus, Mail, ChevronDown, ShieldCheck, Pencil, Trash2, RefreshCw } from "lucide-react";
 import { DynIcon } from "@/components/DynIcon";
 import { PolicyStatusBadge, EmptyState } from "@/components/ui";
 import { InstallmentsList } from "./InstallmentsList";
@@ -17,16 +18,20 @@ import {
   effectiveInstallmentStatus,
 } from "@/lib/format";
 import { renewalMailto } from "@/lib/mail";
-import type { Client, Installment, Policy } from "@/lib/types";
+import type { Client, Installment, Policy, Quote, QuoteOption } from "@/lib/types";
 
 export function PoliciesTab({
   client,
   policies,
   installmentsByPolicy,
+  quotes,
+  onViewQuotes,
 }: {
   client: Client;
   policies: Policy[];
   installmentsByPolicy: Record<string, Installment[]>;
+  quotes: (Quote & { options: QuoteOption[] })[];
+  onViewQuotes?: () => void;
 }) {
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -79,6 +84,9 @@ export function PoliciesTab({
             ).length;
             const d = daysUntil(p.end_date);
             const soon = p.status === "vigente" && d >= 0 && d <= 30;
+            const renewalQuotes = quotes.filter(
+              (q) => q.renews_policy_id === p.id && q.status === "aberta",
+            );
             return (
               <div key={p.id} className="card p-5">
                 <div className="flex items-start gap-3">
@@ -153,6 +161,14 @@ export function PoliciesTab({
                     >
                       <Mail size={14} /> Renovação
                     </a>
+                    {(p.status === "vigente" || p.status === "vencida") && (
+                      <Link
+                        to={`/cotacoes/nova?client=${client.id}&renews=${p.id}`}
+                        className="btn btn-soft !py-1.5 !text-xs"
+                      >
+                        <RefreshCw size={14} /> Renovar
+                      </Link>
+                    )}
                     <button
                       className="btn btn-ghost !py-1.5 !text-xs"
                       onClick={() =>
@@ -167,6 +183,19 @@ export function PoliciesTab({
                     </button>
                   </div>
                 </div>
+
+                {renewalQuotes.length > 0 && (
+                  <button
+                    onClick={onViewQuotes}
+                    className="mt-3 flex w-full items-center gap-2 rounded-lg bg-accent-soft px-3 py-2 text-left text-xs text-accent hover:brightness-110"
+                  >
+                    <RefreshCw size={13} />
+                    {renewalQuotes.length === 1
+                      ? "1 cotação de renovação em andamento"
+                      : `${renewalQuotes.length} cotações de renovação em andamento`}
+                    <span className="ml-auto underline">Ver na aba Cotações</span>
+                  </button>
+                )}
 
                 {expanded === p.id && (
                   <InstallmentsList

@@ -11,23 +11,27 @@ import {
   Save,
   X,
   FileText,
+  RefreshCw,
 } from "lucide-react";
 import { deleteQuote, deleteQuoteOption, updateQuote, updateQuoteOption } from "@/db/repo";
 import { openFile } from "@/db/files";
 import { EmptyState } from "@/components/ui";
 import { INSURERS, PAYMENT_METHODS, POLICY_TYPES, POLICY_TYPE_LABEL } from "@/lib/constants";
 import { formatBRL, formatDate } from "@/lib/format";
-import type { PaymentMethod, PolicyType, Quote, QuoteOption } from "@/lib/types";
+import type { PaymentMethod, Policy, PolicyType, Quote, QuoteOption } from "@/lib/types";
 
 type QuoteWithOptions = Quote & { options: QuoteOption[] };
 
 export function QuotesTab({
   clientId,
   quotes,
+  policies,
 }: {
   clientId: string;
   quotes: QuoteWithOptions[];
+  policies: Pick<Policy, "id" | "insurer" | "end_date">[];
 }) {
+  const policyById = new Map(policies.map((p) => [p.id, p]));
   const [editingQuoteId, setEditingQuoteId] = useState<string | null>(null);
   const [editingOptionId, setEditingOptionId] = useState<string | null>(null);
 
@@ -70,12 +74,15 @@ export function QuotesTab({
               null,
             );
             const canEdit = q.status === "aberta";
+            const renewedPolicy = q.renews_policy_id
+              ? policyById.get(q.renews_policy_id)
+              : undefined;
             return (
               <div key={q.id} className="card p-5">
                 {editingQuoteId === q.id ? (
                   <EditQuoteHeader quote={q} onDone={() => setEditingQuoteId(null)} />
                 ) : (
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="font-semibold">
                       Cotação {POLICY_TYPE_LABEL[q.type]}
                     </span>
@@ -87,6 +94,12 @@ export function QuotesTab({
                       <span className="badge badge-gray">Descartada</span>
                     ) : (
                       <span className="badge badge-blue">Em aberto</span>
+                    )}
+                    {renewedPolicy && (
+                      <span className="badge badge-amber">
+                        <RefreshCw size={12} /> Renovação · {renewedPolicy.insurer}
+                        {renewedPolicy.end_date ? ` · vence ${formatDate(renewedPolicy.end_date)}` : ""}
+                      </span>
                     )}
                     <span className="num ml-auto text-xs text-faint">
                       {formatDate(q.created_at)}

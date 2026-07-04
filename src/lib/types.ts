@@ -9,7 +9,7 @@ export type PolicyType =
   | "viagem"
   | "outros";
 
-export type PolicyStatus = "vigente" | "em_cotacao" | "vencida" | "cancelada";
+export type PolicyStatus = "vigente" | "em_cotacao" | "vencida" | "cancelada" | "renovada";
 export type QuoteStatus = "aberta" | "oficializada" | "descartada";
 export type InstallmentStatus = "pendente" | "paga" | "atrasada";
 export type ClaimStatus = "aberto" | "em_analise" | "aprovado" | "negado" | "pago";
@@ -60,6 +60,7 @@ export interface Quote {
   type: PolicyType;
   status: QuoteStatus;
   policy_id: string | null;
+  renews_policy_id: string | null;
   notes: string | null;
   created_at: string;
 }

@@ -5,7 +5,7 @@ import { INSURERS, PAYMENT_METHODS, POLICY_STATUS_LABEL, POLICY_TYPES } from "@/
 import { addYearsISO, todayISO } from "@/lib/format";
 import type { PaymentMethod, Policy, PolicyStatus, PolicyType } from "@/lib/types";
 
-const POLICY_STATUSES: PolicyStatus[] = ["vigente", "em_cotacao", "vencida", "cancelada"];
+const POLICY_STATUSES: PolicyStatus[] = ["vigente", "em_cotacao", "vencida", "renovada", "cancelada"];
 
 export function AddPolicyForm({
   clientId,
