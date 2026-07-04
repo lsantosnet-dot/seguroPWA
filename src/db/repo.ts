@@ -18,6 +18,7 @@ import type {
   Installment,
   PaymentMethod,
   Policy,
+  PolicyStatus,
   PolicyType,
   Quote,
   QuoteOption,
@@ -645,6 +646,46 @@ export function createQuote(input: {
   return { ok: true, id };
 }
 
+export function updateQuote(
+  id: string,
+  input: { type: PolicyType; notes?: string | null },
+): { ok: boolean; error?: string } {
+  run("UPDATE quotes SET type = ?, notes = ? WHERE id = ?", [
+    input.type,
+    input.notes ?? null,
+    id,
+  ]);
+  touch();
+  return { ok: true };
+}
+
+export function updateQuoteOption(
+  id: string,
+  input: {
+    insurer: string;
+    premium: number;
+    coverage?: string | null;
+    installmentsCount: number;
+    paymentMethod?: PaymentMethod | null;
+  },
+): { ok: true } | { ok: false; error: string } {
+  if (!input.insurer.trim()) return { ok: false, error: "Informe a seguradora" };
+  run(
+    `UPDATE quote_options SET insurer = ?, premium = ?, coverage = ?,
+            installments_count = ?, payment_method = ? WHERE id = ?`,
+    [
+      input.insurer.trim(),
+      input.premium,
+      input.coverage ?? null,
+      Math.max(1, Math.round(input.installmentsCount || 1)),
+      input.paymentMethod ?? null,
+      id,
+    ],
+  );
+  touch();
+  return { ok: true };
+}
+
 export async function addQuoteOption(
   quoteId: string,
   input: {
@@ -840,6 +881,52 @@ export function createPolicy(input: {
     insertInstallments(policyId, input.premium, count, start);
   }
 
+  touch();
+  return { ok: true };
+}
+
+export function updatePolicy(
+  id: string,
+  input: {
+    type: PolicyType;
+    insurer: string;
+    policyNumber?: string | null;
+    premium: number;
+    commissionRate?: number;
+    paymentMethod: PaymentMethod;
+    installmentsCount: number;
+    startDate: string;
+    endDate?: string | null;
+    status: PolicyStatus;
+  },
+): { ok: boolean; error?: string } {
+  if (!input.insurer.trim()) return { ok: false, error: "Informe a seguradora" };
+  const start = input.startDate || todayISO();
+  const end = input.endDate || addYearsISO(start, 1);
+  run(
+    `UPDATE policies SET type = ?, insurer = ?, policy_number = ?, premium = ?,
+            commission_rate = ?, payment_method = ?, installments_count = ?,
+            start_date = ?, end_date = ?, status = ? WHERE id = ?`,
+    [
+      input.type,
+      input.insurer.trim(),
+      input.policyNumber ?? null,
+      input.premium,
+      input.commissionRate ?? 10,
+      input.paymentMethod,
+      Math.max(1, Math.round(input.installmentsCount || 1)),
+      start,
+      end,
+      input.status,
+      id,
+    ],
+  );
+  touch();
+  return { ok: true };
+}
+
+export function deletePolicy(id: string) {
+  run("DELETE FROM policies WHERE id = ?", [id]);
   touch();
   return { ok: true };
 }

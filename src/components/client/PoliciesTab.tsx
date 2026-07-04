@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Plus, Mail, ChevronDown, ShieldCheck } from "lucide-react";
+import { Plus, Mail, ChevronDown, ShieldCheck, Pencil, Trash2 } from "lucide-react";
 import { DynIcon } from "@/components/DynIcon";
 import { PolicyStatusBadge, EmptyState } from "@/components/ui";
 import { InstallmentsList } from "./InstallmentsList";
 import { AddPolicyForm } from "./AddPolicyForm";
+import { deletePolicy } from "@/db/repo";
 import {
   PAYMENT_METHOD_LABEL,
   POLICY_TYPE_ICON,
@@ -28,7 +29,16 @@ export function PoliciesTab({
   installmentsByPolicy: Record<string, Installment[]>;
 }) {
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
+
+  function remove(p: Policy) {
+    const ok = window.confirm(
+      `Excluir a apólice ${p.insurer}${p.policy_number ? ` (${p.policy_number})` : ""}? As parcelas dela também serão removidas.`,
+    );
+    if (!ok) return;
+    deletePolicy(p.id);
+  }
 
   return (
     <div>
@@ -53,6 +63,16 @@ export function PoliciesTab({
       ) : (
         <div className="space-y-3">
           {policies.map((p) => {
+            if (editingId === p.id) {
+              return (
+                <AddPolicyForm
+                  key={p.id}
+                  clientId={client.id}
+                  policy={p}
+                  onDone={() => setEditingId(null)}
+                />
+              );
+            }
             const insts = installmentsByPolicy[p.id] ?? [];
             const paidCount = insts.filter(
               (i) => effectiveInstallmentStatus(i) === "paga",
@@ -81,7 +101,23 @@ export function PoliciesTab({
                       {p.policy_number ? ` · Apólice ${p.policy_number}` : ""}
                     </p>
                   </div>
-                  <div className="ml-auto text-right">
+                  <div className="ml-auto flex shrink-0 items-center gap-1 text-faint">
+                    <button
+                      onClick={() => setEditingId(p.id)}
+                      className="hover:text-accent"
+                      title="Editar apólice"
+                    >
+                      <Pencil size={15} />
+                    </button>
+                    <button
+                      onClick={() => remove(p)}
+                      className="hover:text-danger"
+                      title="Excluir apólice"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                  <div className="text-right">
                     <p className="num text-lg font-bold">{formatBRL(p.premium)}</p>
                     <p className="text-xs capitalize text-faint">
                       {p.payment_method

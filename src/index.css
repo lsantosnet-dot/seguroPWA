@@ -32,6 +32,39 @@
   --radius: 0.875rem;
 }
 
+/* ===========================================================================
+   Tema claro — mesma paleta verde, invertida para fundo claro
+   =========================================================================== */
+:root.light {
+  --color-bg: #f5f8f7;
+  --color-surface: #ffffff;
+  --color-panel: #ffffff;
+  --color-panel-2: #eef3f1;
+  --color-border: rgba(15, 23, 20, 0.09);
+  --color-border-strong: rgba(15, 23, 20, 0.16);
+
+  --color-text: #0f1513;
+  --color-muted: #5b655f;
+  --color-faint: #8b968f;
+
+  --color-accent: #059669;
+  --color-accent-strong: #047857;
+  --color-accent-soft: rgba(5, 150, 105, 0.12);
+
+  --color-positive: #16a34a;
+  --color-warning: #b45309;
+  --color-danger: #dc2626;
+  --color-info: #2563eb;
+}
+
+:root.light ::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 20, 0.12);
+  border-color: var(--color-bg);
+}
+:root.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 20, 0.2);
+}
+
 * {
   border-color: var(--color-border);
 }

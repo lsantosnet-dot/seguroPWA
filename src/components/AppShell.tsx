@@ -11,12 +11,15 @@ import {
   Menu,
   X,
   Download,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { GlobalSearch } from "./GlobalSearch";
 import { formatBRLCompact } from "@/lib/format";
 import { getShellData } from "@/db/repo";
 import { useDataVersion } from "@/db/DbContext";
 import { useInstall } from "@/pwa/useInstall";
+import { useThemeToggle } from "@/theme/ThemeContext";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
@@ -30,6 +33,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const version = useDataVersion();
+  const { theme, toggle } = useThemeToggle();
   const { counts, meta } = useMemo(() => {
     const s = getShellData();
     return { counts: { agenda: s.agenda, sinistros: s.sinistros }, meta: s.meta };
@@ -108,6 +112,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {formatBRLCompact(meta.achieved)} / {formatBRLCompact(meta.target)}
         </div>
       </Link>
+
+      {/* Tema claro/escuro */}
+      <div className="mx-3 mb-3 flex items-center justify-between rounded-xl bg-surface p-1.5">
+        <button
+          onClick={() => toggle()}
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-medium transition-colors ${
+            theme === "light" ? "bg-accent-soft text-accent" : "text-faint hover:text-muted"
+          }`}
+          title="Tema claro"
+        >
+          <Sun size={14} /> Claro
+        </button>
+        <button
+          onClick={() => toggle()}
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-medium transition-colors ${
+            theme === "dark" ? "bg-accent-soft text-accent" : "text-faint hover:text-muted"
+          }`}
+          title="Tema escuro"
+        >
+          <Moon size={14} /> Escuro
+        </button>
+      </div>
 
       {/* Versão do app */}
       <div className="flex items-center gap-3 border-t border-border px-5 py-4">
