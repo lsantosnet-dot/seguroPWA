@@ -10,6 +10,7 @@ import {
 import { ShieldCheck } from "lucide-react";
 import { openDatabase, persistNow } from "./database";
 import { dbEvents } from "./repo";
+import { recordChange } from "./backupReminder";
 
 const DbVersionContext = createContext(0);
 
@@ -30,7 +31,10 @@ export function DbProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const onChange = () => setVersion((v) => v + 1);
+    const onChange = () => {
+      setVersion((v) => v + 1);
+      recordChange();
+    };
     dbEvents.addEventListener("change", onChange);
     // garante a persistência ao sair/minimizar
     const onHide = () => {

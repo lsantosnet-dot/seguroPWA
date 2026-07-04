@@ -1,11 +1,15 @@
 // Banners de PWA: instalar o app, nova versão disponível e status offline.
 import { useEffect, useState } from "react";
 import { useRegisterSW } from "virtual:pwa-register/react";
-import { Download, RefreshCw, Share, WifiOff, X } from "lucide-react";
+import { Download, RefreshCw, Share, WifiOff, X, SaveAll } from "lucide-react";
 import { useInstall } from "./useInstall";
 import { persistNow } from "@/db/database";
+import { downloadBackup } from "@/db/backup";
+import { shouldRemindBackup, snoozeBackupReminder } from "@/db/backupReminder";
+import { useDataVersion } from "@/db/DbContext";
 
 const UPDATE_CHECK_INTERVAL = 60 * 60 * 1000; // 1h
+const BACKUP_REMINDER_RECHECK_INTERVAL = 60 * 60 * 1000; // 1h
 
 export function PwaUI() {
   return (
@@ -14,6 +18,7 @@ export function PwaUI() {
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex flex-col items-center gap-2 p-4">
         <UpdateBanner />
         <InstallBanner />
+        <BackupReminderBanner />
       </div>
     </>
   );
@@ -106,6 +111,66 @@ function InstallBanner() {
         </button>
       )}
       <button className="text-faint hover:text-text" onClick={dismiss} aria-label="Fechar">
+        <X size={16} />
+      </button>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+function BackupReminderBanner() {
+  const version = useDataVersion();
+  const [recheck, setRecheck] = useState(0);
+  const [pending, setPending] = useState(false);
+
+  useEffect(() => {
+    const id = setInterval(() => setRecheck((n) => n + 1), BACKUP_REMINDER_RECHECK_INTERVAL);
+    return () => clearInterval(id);
+  }, []);
+
+  // version/recheck não são lidos diretamente — só forçam este componente a
+  // reavaliar shouldRemindBackup() a cada mutação e a cada hora.
+  void version;
+  void recheck;
+  const show = shouldRemindBackup();
+
+  if (!show) return null;
+
+  return (
+    <div className="pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-2xl border border-warning/40 bg-panel p-4 shadow-2xl">
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
+        <SaveAll size={18} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold">Faz tempo que você não faz backup</p>
+        <p className="text-xs text-muted">
+          Seus dados ficam só neste aparelho — exporte um backup para não correr risco de perdê-los.
+        </p>
+      </div>
+      <button
+        className="btn btn-primary !py-1.5 !text-xs"
+        disabled={pending}
+        onClick={async () => {
+          setPending(true);
+          try {
+            await downloadBackup();
+          } finally {
+            setPending(false);
+            setRecheck((n) => n + 1);
+          }
+        }}
+      >
+        Baixar backup
+      </button>
+      <button
+        className="text-faint hover:text-text"
+        onClick={() => {
+          snoozeBackupReminder();
+          setRecheck((n) => n + 1);
+        }}
+        aria-label="Lembrar depois"
+        title="Lembrar depois"
+      >
         <X size={16} />
       </button>
     </div>

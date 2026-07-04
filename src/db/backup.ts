@@ -5,6 +5,7 @@ import { all, persistNow, run } from "./database";
 import { dbEvents } from "./repo";
 import { schedulePersist } from "./database";
 import * as files from "./files";
+import { recordBackupDone } from "./backupReminder";
 
 export const TABLES = [
   "clients",
@@ -83,6 +84,7 @@ export async function downloadBackup() {
   a.download = `apolice-backup-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  recordBackupDone();
 }
 
 /** Normaliza uma linha vinda do backup para o INSERT local. */
@@ -154,5 +156,6 @@ export async function importBundle(
 
   schedulePersist();
   dbEvents.dispatchEvent(new Event("change"));
+  recordBackupDone();
   return { ok: true, counts };
 }
